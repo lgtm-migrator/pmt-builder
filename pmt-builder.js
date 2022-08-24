@@ -1,17 +1,28 @@
-let sha256 = require('bitcoinjs-lib').crypto.hash256;
+const sha256 = require('bitcoinjs-lib').crypto.hash256;
 
 const lpad = (number, length) => number.toString().padStart(length, '0');
 
 const reverseHex = (hexString) => Buffer.from(hexString, 'hex').reverse().toString('hex');
 
+/**
+ * @returns Hex format of the number with a left padding using zeros '0'
+ */
+function formatHex(number, len) {
+    let hexString = number.toString(16);
+    while (hexString.length < len) {
+        hexString = '0' + hexString;
+    }
+    return hexString;
+}
+
 const combineLeftAndRight = (left, right) => {
-    let bufLeft = Buffer.from(left, 'hex');
-    let bufRight = Buffer.from(right, 'hex');
+    const bufLeft = Buffer.from(left, 'hex');
+    const bufRight = Buffer.from(right, 'hex');
     bufLeft.reverse();
     bufRight.reverse();
 
-    let bufCombined = Buffer.concat([bufLeft,bufRight]);
-    let bufHashed = sha256(sha256(bufCombined));
+    const bufCombined = Buffer.concat([bufLeft,bufRight]);
+    const bufHashed = sha256(sha256(bufCombined));
     bufHashed.reverse();
     return bufHashed.toString('hex');
 };
@@ -99,7 +110,7 @@ const buildPMT = (leaves, filteredHash) => {
         totalTX : leaves.length,
         hashes : hashes,
         flags : parseInt(flags.toString('hex'), 16),
-        hex: `${lpad(leaves.length.toString(16), 2)}${lpad(hashes.length.toString(16), 8)}${hashes.map(reverseHex).join('')}${lpad(flags.length.toString(16), 2)}${flags.toString('hex')}`
+        hex: `${formatHex(leaves.length, 2)}${formatHex(hashes.length, 8)}${hashes.map(reverseHex).join('')}${formatHex(flags.length, 2)}${flags.toString('hex')}`
     };
 };
 
