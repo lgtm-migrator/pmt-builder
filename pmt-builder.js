@@ -1,6 +1,5 @@
+const varint = require("varint");
 const sha256 = require('bitcoinjs-lib').crypto.hash256;
-
-const lpad = (number, length) => number.toString().padStart(length, '0');
 
 const reverseHex = (hexString) => Buffer.from(hexString, 'hex').reverse().toString('hex');
 
@@ -106,11 +105,19 @@ const buildPMT = (leaves, filteredHash) => {
     for (let p = 0; p < bits.length; p++)
         flags[p / 8 | 0] |= bits[p] << (p % 8);
 
+    let leavesAndHashesVarint = varint.encode(leaves.length, [], 0);
+    leavesAndHashesVarint = varint.encode(hashes.length, leavesAndHashesVarint, 4);
+
+    const flagsVarint = varint.encode(flags.length, [], 0)
+
     return {
         totalTX : leaves.length,
         hashes : hashes,
         flags : parseInt(flags.toString('hex'), 16),
-        hex: `${formatHex(leaves.length, 2)}${formatHex(hashes.length, 8)}${hashes.map(reverseHex).join('')}${formatHex(flags.length, 2)}${flags.toString('hex')}`
+        hex:  `${Buffer.from(leavesAndHashesVarint).toString('hex')}`+
+              `${hashes.map(reverseHex).join('')}` +
+              `${Buffer.from(flagsVarint).toString('hex')}` +
+              `${flags.toString('hex')}`
     };
 };
 
